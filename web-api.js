@@ -35,8 +35,8 @@ export const api = {
   getReferrals:      ()        => http("/api/referrals"),
   getTasks:          ()        => http("/api/tasks"),
   claimTask:         (id)      => post(`/api/tasks/${id}/claim`),
-  submitProof:       (id, img) => post(`/api/tasks/${id}/submit`, { image: img }),
-  saveWallet:        (address, qrImage) => post("/api/wallet", { address, qr_image: qrImage }),
+  startTask:         (id)      => post(`/api/tasks/${id}/start`),
+  saveWallet:        (address) => post("/api/wallet", { address }),
   requestWithdrawal: (payload) => post("/api/withdrawals", payload),
 
   admin: {
@@ -54,15 +54,6 @@ export const api = {
     updateTask:        (id, t)     => http(`/api/admin/tasks/${id}`, "PUT", t),
     deleteTask:        (id)        => http(`/api/admin/tasks/${id}`, "DELETE"),
 
-    submissions:       ()          => http("/api/admin/submissions"),
-    approveSubmission: (id)        => post(`/api/admin/submissions/${id}/approve`),
-    rejectSubmission:  (id)        => post(`/api/admin/submissions/${id}/reject`),
-    async submissionImage(id) {
-      const res = await fetch(CONFIG.API_BASE + `/api/admin/submissions/${id}/image`, { headers: authHeader() });
-      if (!res.ok) throw new Error("Could not load the image.");
-      return res.blob();
-    },
-
     withdrawals:       (status)    => http(`/api/admin/withdrawals?status=${encodeURIComponent(status)}`),
     sendWithdrawal:    (id)        => post(`/api/admin/withdrawals/${id}/send`),
     payWithdrawal:     (id)        => post(`/api/admin/withdrawals/${id}/paid`),
@@ -71,11 +62,6 @@ export const api = {
     users:             (q)         => http(`/api/admin/users?q=${encodeURIComponent(q || "")}`),
     adjustBalance:     (id, amount, note) => post(`/api/admin/users/${id}/balance`, { amount, note }),
     resetWallet:       (id)        => post(`/api/admin/users/${id}/wallet/reset`),
-    async walletQrImage(id) {
-      const res = await fetch(CONFIG.API_BASE + `/api/admin/users/${id}/wallet/qr`, { headers: authHeader() });
-      if (!res.ok) throw new Error("Could not load the image.");
-      return res.blob();
-    },
 
     broadcast:         (text)      => post("/api/admin/broadcast", { text }),
     broadcasts:        ()          => http("/api/admin/broadcasts")

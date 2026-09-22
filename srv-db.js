@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   description TEXT NOT NULL DEFAULT '',
   reward      NUMERIC(14,4) NOT NULL CHECK (reward >= 0),
   url         TEXT NOT NULL DEFAULT '',
-  verify_type TEXT NOT NULL CHECK (verify_type IN ('auto','screenshot')),
+  verify_type TEXT NOT NULL CHECK (verify_type IN ('auto','timer')),
+  timer_seconds INT NOT NULL DEFAULT 10 CHECK (timer_seconds BETWEEN 3 AND 86400),
   chat_id     TEXT NOT NULL DEFAULT '',
   active      BOOLEAN NOT NULL DEFAULT TRUE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -121,10 +122,11 @@ const MIGRATIONS = `
 ALTER TABLE referrals ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed';
 ALTER TABLE referrals ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
 
--- Manually entered BEP20 wallet (one wallet can belong to only one account), plus the
--- QR-code screenshot the user provides as proof of the address.
+-- Manually entered USDT BEP20 wallet (one wallet can belong to only one account).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS wallet_address TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS wallet_connected_at TIMESTAMPTZ;
+-- wallet_qr_image / wallet_qr_mime: from an earlier version that asked for a QR screenshot.
+-- No longer written to; left in place only so nothing breaks for anyone who already has them.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS wallet_qr_image BYTEA;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS wallet_qr_mime TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS users_wallet_uniq ON users (lower(wallet_address)) WHERE wallet_address IS NOT NULL;
@@ -136,6 +138,13 @@ ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS payout_state TEXT NOT NULL DEFA
 ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS tx_hash TEXT;
 ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS note TEXT;
 ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS payout_response TEXT;
+
+-- Timer-based tasks: instead of a screenshot, a per-task countdown (seconds) runs after the
+-- user opens the task link, and the reward is credited once enough time has genuinely passed.
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS timer_seconds INT NOT NULL DEFAULT 10;
+UPDATE tasks SET verify_type = 'timer' WHERE verify_type = 'screenshot';
+ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_verify_type_check;
+ALTER TABLE tasks ADD CONSTRAINT tasks_verify_type_check CHECK (verify_type IN ('auto','timer'));
 `;
 
 // Starting values only. Everything here is editable in the Admin panel afterwards.

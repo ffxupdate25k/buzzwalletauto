@@ -38,7 +38,7 @@ export default {
         <label for="s-token">Token contract address (BEP20)</label>
         <input id="s-token" placeholder="0x..." value="${esc(s.payout_token_address)}">
         <p class="hint">The token users are paid in. Users' amounts are sent as this token.</p>
-        <p class="hint">Users type their own USDT BEP20 address and attach a QR screenshot in the app — no wallet connection needed.</p>
+        <p class="hint">Users type their own USDT BEP20 address in the app — no wallet connection or screenshot needed.</p>
       </div>
 
       <button class="btn" id="save">Save settings</button>`;

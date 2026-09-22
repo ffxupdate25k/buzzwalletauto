@@ -26,11 +26,16 @@ If your picker limits how many files you can select at once, do it in 2 batches 
 Only brand-new users count, and nobody can refer themselves.
 
 ## How wallets and withdrawals work
-1. In **Withdrawal**, the user types their USDT BEP20 (BNB Smart Chain) wallet address and attaches a screenshot of their wallet's QR code as proof. No wallet app connection needed.
-2. That address (and the QR screenshot) is saved to their account permanently — an admin can view the screenshot or reset it in Users if someone needs to switch wallets.
+1. In **Withdrawal**, the user types their USDT BEP20 (BNB Smart Chain) wallet address. No wallet app connection and no screenshot needed.
+2. That address is saved to their account permanently — an admin can reset it in Users if someone needs to switch wallets.
 3. When they request a withdrawal, if **Auto payout** is on in Admin > Settings, the server calls your payout API immediately and the user gets a message once it's sent.
 4. If auto payout is off, or the payout API gives an unclear answer, the withdrawal waits in Admin > Withdrawals for you to send or reject it. The user's balance is held, not lost, until you decide.
 5. A clear failure from the API refunds the user automatically. An unclear result (timeout, 5xx, odd reply) is never auto-refunded — it's flagged for you to check by hand.
+
+## How tasks work
+Each task is verified one of two ways, chosen by the admin when creating it:
+- **Auto** — the bot checks that the user has joined a channel/group (the bot must be an admin there).
+- **Timer** — the user taps Start, the task's link opens, and a per-task countdown (default 10s, set per task) begins. The reward is credited automatically the moment the countdown ends — server-side, so it can't be skipped by editing the page.
 
 ## File map
 | File | What it is |
@@ -48,7 +53,7 @@ Only brand-new users count, and nobody can refer themselves.
 | `web-app.js` | frontend entry point (Telegram gate, router) |
 | `web-config.js` / `web-telegram.js` / `web-utils.js` / `web-icons.js` / `web-api.js` | frontend helpers |
 | `web-page-*.js` | one file per screen (dashboard, profile, history, referral, task, withdrawal, gate) |
-| `web-page-admin*.js` | the Admin panel and its tabs (overview, settings, channels, tasks, proofs, payouts, users, broadcast) |
+| `web-page-admin*.js` | the Admin panel and its tabs (overview, settings, channels, tasks, payouts, users, broadcast) |
 
 ## Deploy (Render + free Postgres)
 1. **Database:** create a free Postgres at neon.tech and copy its connection string.
@@ -71,13 +76,12 @@ Open the app with the admin account and tap **Admin panel**. Nothing is hardcode
 
 | Tab | What it does |
 |-----|--------------|
-| Overview | users, balances, referrals, tasks, proofs, withdrawals, payouts needing review |
+| Overview | users, balances, referrals, tasks, withdrawals, payouts needing review |
 | Settings | referral reward, min/max withdrawal, welcome message, auto payout on/off, payout API address, API key, token contract address |
 | Channels | channels/groups every user must join before using the app |
-| Tasks | create tasks: **Auto** (bot checks membership) or **Screenshot** (you approve uploads) |
-| Proofs | review task screenshots |
+| Tasks | create tasks: **Auto** (bot checks membership) or **Timer** (countdown after opening a link), with a per-task countdown length |
 | Withdrawals | see auto payouts in progress, send a waiting one manually, mark paid, or reject (refunds the user) |
-| Users | search by ID or @username, add/remove balance, view a user's wallet QR screenshot, reset a user's saved wallet |
+| Users | search by ID or @username, add/remove balance, reset a user's saved wallet |
 | Broadcast | send a message to all users through the bot |
 
 ### Setting up automatic payouts
